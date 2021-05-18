@@ -34,8 +34,12 @@ class Client:
                         message.params['qtd'] = input('Type the quantity you want to transfer:')
 
                     elif operation.upper() == 'TRANSF':
-                        message.params['qtd'] = input('Type the quantity you want to transfer:')
-                        message.params['owner'] = input('Type the username of the recipient wallet owner:')
+                        message.params['amount'] = input('Type the quantity you want to transfer:')
+                        message.params['destiny'] = input('Type the username of the recipient wallet owner:')
+
+                    elif operation.upper() == 'CONF':
+                        message.params['idtransf'] = input('Type the id of the transaction you want to confirm:')
+                        message.params['status'] = input('Type the status you want to confirm:')
 
                     elif operation.upper() == 'SAIR':
                         left = True
@@ -52,7 +56,7 @@ class Client:
 
         finally:
             self.close_socket(self.sock)
-    
+
     def close_socket(self, socket):
         socket.close()
         print('Connection closed!')
@@ -61,7 +65,7 @@ if __name__ == '__main__':
     try:
         client = Client()
         print('Client initialized!')
-        socket = client.connect('127.0.0.1', 55555)
+        client.connect('127.0.0.1', 55555)
         print('Connection established!')
         client.handleConnection()
     except Exception as e:

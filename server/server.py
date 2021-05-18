@@ -1,7 +1,7 @@
 from context import Context
 from message import Message
 from operator import methodcaller
-from state import *
+from state import Connected, GoingOut
 from threading import Thread
 import pickle
 import socket
@@ -9,6 +9,7 @@ import socket
 class Server:
     def __init__(self, sock=None):
         self.clients = {}
+        self.transactions = {}
 
         if sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,7 +28,7 @@ class Server:
         try:
             context = Context(Connected(), socket, self)
 
-            while (context.state != GoingOut()):
+            while (not isinstance(context.state, GoingOut)):
                 message = pickle.loads(socket.recv(1024))
                 print(f"-> Message received: \n{message}")
                 operation = message.operation
@@ -48,7 +49,10 @@ class Server:
         print('Connection closed!')
 
     def find_user(self, username):
-        return next((c for c in self.clients.values() if c.username == username), None)
+        return self.clients.get(username)
+
+    def find_transaction(self, transaction_id):
+        return self.transactions.get(transaction_id)
 
 if __name__ == '__main__':
     try:

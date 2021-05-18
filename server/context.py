@@ -35,6 +35,9 @@ class Context:
     def transf(self, message):
         self.state.transf(message)
 
+    def conf(self, message):
+        self.state.conf(message)
+
     def list(self, message):
         self.state.list(message)
 
@@ -49,6 +52,6 @@ class Context:
 
     def default(self, message):
         response = Message(f"{message.operation}REPLY")
-        response.status = 401
+        response.status = 501
         response.params['res'] = 'Invalid operation for state!'
         self.socket.send(pickle.dumps(response))

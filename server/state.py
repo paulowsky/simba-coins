@@ -39,6 +39,10 @@ class State(ABC):
         pass
 
     @abstractmethod
+    def conf(self, message):
+        pass
+
+    @abstractmethod
     def list(self, message):
         pass
 
@@ -118,6 +122,9 @@ class Connected(State):
     def transf(self, message):
         self.default('TRANSFREPLY')
 
+    def conf(self, message):
+        self.default('CONFREPLY')
+
     def list(self, message):
         self.default('LISTREPLY')
 
@@ -165,7 +172,7 @@ class Authenticated(State):
                 response.params['balanceafter'] = self.context.client.wallet.balance
 
             else:
-                response.status = 401
+                response.status = 400
                 response.params['res'] = 'Param qtd invalid!'
 
         except Exception as e:
@@ -180,11 +187,11 @@ class Authenticated(State):
             quantity = float(message.params['qtd'])
 
             if not quantity:
-                response.status = 401
+                response.status = 400
                 response.params['res'] = 'Param qtd invalid!'
 
             elif self.context.client.wallet.balance < quantity:
-                response.status = 401
+                response.status = 400
                 response.params['res'] = 'Balance insufficient!'
 
             else:
@@ -203,23 +210,79 @@ class Authenticated(State):
     def transf(self, message):
         response = Message('TRANSFREPLY')
         try:
-            quantity = float(message.params['qtd'])
-            client = self.context.server.find_user(message.params['owner'])
+            quantity = float(message.params['amount'])
+            client = self.context.server.find_user(message.params['destiny'])
 
             if not quantity or not client:
-                response.status = 401
-                response.params['res'] = 'Param qtd or owner invalid!'
+                response.status = 400
+                response.params['res'] = 'Param amount or destiny invalid!'
 
             elif self.context.client.wallet.balance < quantity:
-                response.status = 401
+                response.status = 400
                 response.params['res'] = 'Balance insufficient!'
 
             else:
-                self.context.client.wallet.balance -= quantity
-                response.status = 200
-                client.wallet.balance += quantity
-                response.params['balanceafter'] = self.context.client.wallet.balance
+                id = len(self.context.server.transactions)
+                self.context.server.transactions[id] = \
+                    {
+                        'origin': self.context.client,
+                        'destiny': client,
+                        'amount': quantity,
+                        'status': 'pending'
+                    }
 
+                self.context.client.semaphore.acquire()
+                self.context.client.semaphore.acquire()
+                response.status = 200
+                transf = self.context.server.transactions[id]
+
+                if transf['status'] == 'approved':
+                    self.context.client.wallet.balance -= quantity
+                    client.wallet.balance += quantity
+                    response.params['res'] = 'Transaction approved!'
+                    response.params['balanceafter'] = self.context.client.wallet.balance
+                elif transf['status'] == 'reproved':
+                    response.params['res'] = 'Transaction reproved!'
+                    response.params['balanceafter'] = self.context.client.wallet.balance
+
+                self.context.client.semaphore.release()
+
+        except Exception as e:
+            response.status = 500
+            response.params['res'] = 'Internal Server Error!'
+
+        self.context.socket.send(pickle.dumps(response))
+
+    def conf(self, message):
+        response = Message('CONFREPLY')
+        try:
+            transf_id = int(message.params['idtransf'])
+            status = message.params['status']
+            transf = self.context.server.transactions[transf_id]
+
+            if transf:
+                if status.upper() == 'APPROVED' or status.upper() == 'REPROVED':
+                    if self.context.client.username == transf['destiny'].username:
+                        if transf['status'] == 'pending':
+                            response.status = 200
+                            if status.upper() == 'APPROVED':
+                                response.params['res'] = 'Transaction approved!'
+                            elif status.upper() == 'REPROVED':
+                                response.params['res'] = 'Transaction reproved!'
+                            transf['status'] = status.lower()
+                            transf['origin'].semaphore.release()
+                        else:
+                            response.status = 400
+                            response.params['res'] = 'This transaction is already confirmed!'
+                    else:
+                        response.status = 400
+                        response.params['res'] = 'This transaction is not for you!'
+                else:
+                    response.status = 400
+                    response.params['res'] = 'Invalid status!'
+            else:
+                response.status = 400
+                response.params['res'] = 'This transaction do not exists!'
         except Exception as e:
             response.status = 500
             response.params['res'] = 'Internal Server Error!'
@@ -289,6 +352,9 @@ class GoingOut(State):
         pass
 
     def transf(self, message):
+        pass
+
+    def conf(self, message):
         pass
 
     def list(self, message):
