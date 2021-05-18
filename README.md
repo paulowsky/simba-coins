@@ -47,8 +47,8 @@ python client\client.py
 ## Todo
 - [x] Configure repo
 - [x] Create a readme
-- [] Regularize imports
-- [] Create a shell-script-based file to run the project with just one command
+- [ ] Regularize imports
+- [ ] Create a shell-script-based file to run the project with just one command
 
 ## Authors
 - [paulowsky](https://github.com/paulowsky)
