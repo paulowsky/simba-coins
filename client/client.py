@@ -18,6 +18,20 @@ class Client:
             left = False
 
             while (not left):
+                print("""
+                Operations:
+                signup: register and auth
+                login: auth
+                ext: statement
+                dep: deposit
+                saq: withdraw
+                transf: transfer
+                conf: confirm transfter you have received
+                list: list wallets
+                del: delete wallet
+                logout: logout
+                sair: close communication
+                """)
                 operation = input('Type the operation:')
 
                 if operation != None:
