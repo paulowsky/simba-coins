@@ -28,14 +28,15 @@ class Client:
                         message.params['pass'] = input('Type the password:')
 
                     elif operation.upper() == 'DEP':
-                        message.params['qtd'] = input('Type the quantity you want to transfer:')
+                        message.params['qtd'] = input('Type the quantity you want to deposit:')
 
                     elif operation.upper() == 'SAQ':
-                        message.params['qtd'] = input('Type the quantity you want to transfer:')
+                        message.params['qtd'] = input('Type the quantity you want to get:')
 
                     elif operation.upper() == 'TRANSF':
                         message.params['amount'] = input('Type the quantity you want to transfer:')
                         message.params['destiny'] = input('Type the username of the recipient wallet owner:')
+                        print('Waiting confirmation...')
 
                     elif operation.upper() == 'CONF':
                         message.params['idtransf'] = input('Type the id of the transaction you want to confirm:')
